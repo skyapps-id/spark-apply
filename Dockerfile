@@ -7,7 +7,7 @@ RUN CGO_ENABLED=0 go build -o spark-apply .
 
 FROM alpine:latest
 WORKDIR /app
-RUN apk add --no-cache docker-cli
+RUN apk add --no-cache docker-cli docker-compose
 COPY --from=builder /app/spark-apply .
 EXPOSE 8080
 VOLUME /var/run/docker.sock
