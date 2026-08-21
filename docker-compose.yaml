@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  spark-apply:
+    build: .
+    ports:
+      - "7856:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - BASE_FOLDER=/Users/ajii/Documents/spark-apply/services
