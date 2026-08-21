@@ -131,7 +131,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := exec.Command("docker", "compose", "-f", composePath, "up", "-d")
+	args := []string{"compose", "-f", composePath, "up", "-d"}
+	cmd := exec.Command("docker", args...)
 	cmd.Dir = servicePath
 	output, err := cmd.CombinedOutput()
 	if err != nil {
