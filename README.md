@@ -24,7 +24,8 @@ Deploy service dengan update image tag.
 ```json
 {
   "service_name": "cctv-platform-be",
-  "tag": "5f69a27c5e437b278e7d0a2da6a9b91dfadd935e"
+  "tag": "5f69a27c5e437b278e7d0a2da6a9b91dfadd935e",
+  "compose_filename": "docker-compose.yml"
 }
 ```
 
@@ -40,9 +41,9 @@ Deploy service dengan update image tag.
 ## Contoh Usage
 
 ```bash
-curl -X POST http://localhost:7856/deploy \
+curl -X POST http://spark-apply-api:8080/deploy \
   -H "Content-Type: application/json" \
-  -d '{"service_name": "cctv-platform-be", "tag": "5f69a27c5e437b278e7d0a2da6a9b91dfadd935e"}'
+  -d '{"service_name": "cctv-platform-be", "tag": "5f69a27c5e437b278e7d0a2da6a9b91dfadd935e", "compose_filename": "docker-compose.yml"}'
 ```
 
 ## Security

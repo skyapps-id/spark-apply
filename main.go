@@ -15,8 +15,9 @@ import (
 )
 
 type Request struct {
-	ServiceName string `json:"service_name"`
-	Tag         string `json:"tag"`
+	ServiceName      string `json:"service_name"`
+	Tag              string `json:"tag"`
+	ComposeFilename  string `json:"compose_filename"`
 }
 
 type DockerCompose struct {
@@ -111,10 +112,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	servicePath := filepath.Join(baseFolder, req.ServiceName)
-	composePath := filepath.Join(servicePath, "docker-compose.yaml")
+	
+	var composePath string
+	if req.ComposeFilename != "" {
+		composePath = filepath.Join(servicePath, req.ComposeFilename)
+	} else {
+		composePath = filepath.Join(servicePath, "docker-compose.yaml")
+	}
 
 	if _, err := os.Stat(composePath); os.IsNotExist(err) {
-		http.Error(w, "Service or docker-compose.yaml not found", http.StatusNotFound)
+		http.Error(w, "Service or docker-compose file not found", http.StatusNotFound)
 		return
 	}
 
