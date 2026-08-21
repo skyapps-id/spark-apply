@@ -7,3 +7,9 @@ services:
       - /home/ajii/manifest:/services
     environment:
       - BASE_FOLDER=/services
+    networks:
+      - pipeline-net
+
+networks:
+  pipeline-net:
+    external: true
