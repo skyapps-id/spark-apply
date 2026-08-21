@@ -135,7 +135,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var execErr error
 	
 	fmt.Printf("Trying: docker compose -f %s up -d\n", composePath)
-	cmd1 := exec.Command("docker", "compose", "-f", composePath, "up", "-d")
+	cmd1 := exec.Command("sh", "-c", "docker compose -f "+composePath+" up -d")
 	cmd1.Dir = servicePath
 	output1, err1 := cmd1.CombinedOutput()
 	fmt.Printf("Output: %s\n", string(output1))
@@ -146,7 +146,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("✓ Success with docker compose -f")
 	} else {
 		fmt.Printf("✗ Failed, trying: docker-compose -f %s up -d\n", composePath)
-		cmd2 := exec.Command("docker-compose", "-f", composePath, "up", "-d")
+		cmd2 := exec.Command("sh", "-c", "docker-compose -f "+composePath+" up -d")
 		cmd2.Dir = servicePath
 		output2, err2 := cmd2.CombinedOutput()
 		fmt.Printf("Output: %s\n", string(output2))
@@ -157,7 +157,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("✓ Success with docker-compose -f")
 		} else {
 			fmt.Printf("✗ Failed, trying: docker compose up -d in %s\n", servicePath)
-			cmd3 := exec.Command("docker", "compose", "up", "-d")
+			cmd3 := exec.Command("sh", "-c", "docker compose up -d")
 			cmd3.Dir = servicePath
 			output, execErr = cmd3.CombinedOutput()
 			fmt.Printf("Output: %s\n", string(output))
