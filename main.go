@@ -10,24 +10,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 type Request struct {
-	ServiceName      string `json:"service_name"`
-	Tag              string `json:"tag"`
-	ComposeFilename  string `json:"compose_filename"`
-}
-
-type DockerCompose struct {
-	Version string              `yaml:"version"`
-	Services map[string]Service `yaml:"services"`
-}
-
-type Service struct {
-	Image string `yaml:"image"`
-	Build interface{} `yaml:"build"`
+	ServiceName     string `json:"service_name"`
+	Tag             string `json:"tag"`
+	ComposeFilename string `json:"compose_filename"`
 }
 
 func isValidServiceName(name string) bool {
@@ -60,42 +48,35 @@ func updateImageTag(composePath string, newTag string) error {
 		fmt.Printf("Warning: could not create backup: %s\n", err)
 	}
 
-	var compose map[string]interface{}
-	err = yaml.Unmarshal(data, &compose)
-	if err != nil {
-		return err
-	}
+	lines := strings.Split(string(data), "\n")
+	var result []string
 
-	services, ok := compose["services"].(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("services not found or invalid")
-	}
-
-	for serviceName, serviceData := range services {
-		service, ok := serviceData.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		if image, ok := service["image"].(string); ok && image != "" {
-			parts := strings.Split(image, ":")
-			if len(parts) > 1 {
-				service["image"] = parts[0] + ":" + newTag
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "image:") {
+			parts := strings.SplitN(trimmed, ":", 2)
+			if len(parts) == 2 {
+				imageValue := strings.TrimSpace(parts[1])
+				imageParts := strings.Split(imageValue, ":")
+				if len(imageParts) > 1 {
+					newImageValue := imageParts[0] + ":" + newTag
+					indent := strings.Repeat(" ", len(line)-len(trimmed))
+					result = append(result, indent+"image: "+newImageValue)
+				} else {
+					newImageValue := imageValue + ":" + newTag
+					indent := strings.Repeat(" ", len(line)-len(trimmed))
+					result = append(result, indent+"image: "+newImageValue)
+				}
 			} else {
-				service["image"] = image + ":" + newTag
+				result = append(result, line)
 			}
+		} else {
+			result = append(result, line)
 		}
-		services[serviceName] = service
 	}
 
-	compose["services"] = services
-
-	newData, err := yaml.Marshal(compose)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(composePath, newData, 0644)
+	newData := strings.Join(result, "\n")
+	return os.WriteFile(composePath, []byte(newData), 0644)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +119,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	servicePath := filepath.Join(baseFolder, req.ServiceName)
-	
+
 	var composePath string
 	if req.ComposeFilename != "" {
 		composePath = filepath.Join(servicePath, req.ComposeFilename)
@@ -159,13 +140,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	var output []byte
 	var execErr error
-	
+
 	fmt.Printf("Trying: docker compose -f %s up -d\n", composePath)
 	cmd1 := exec.Command("sh", "-c", "docker compose -f "+composePath+" up -d")
 	cmd1.Dir = servicePath
 	output1, err1 := cmd1.CombinedOutput()
 	fmt.Printf("Output: %s\n", string(output1))
-	
+
 	if err1 == nil {
 		output = output1
 		execErr = err1
@@ -176,7 +157,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		cmd2.Dir = servicePath
 		output2, err2 := cmd2.CombinedOutput()
 		fmt.Printf("Output: %s\n", string(output2))
-		
+
 		if err2 == nil {
 			output = output2
 			execErr = err2
@@ -187,7 +168,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			cmd3.Dir = servicePath
 			output, execErr = cmd3.CombinedOutput()
 			fmt.Printf("Output: %s\n", string(output))
-			
+
 			if execErr == nil {
 				fmt.Println("✓ Success with docker compose up -d")
 			} else {
