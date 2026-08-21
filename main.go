@@ -131,13 +131,34 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	args := []string{"compose", "-f", composePath, "up", "-d"}
-	cmd := exec.Command("docker", args...)
-	cmd.Dir = servicePath
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		http.Error(w, "Error running docker compose: "+err.Error()+"\n"+string(output), http.StatusInternalServerError)
-		return
+	var output []byte
+	var execErr error
+	
+	cmd1 := exec.Command("docker", "compose", "-f", composePath, "up", "-d")
+	cmd1.Dir = servicePath
+	output1, err1 := cmd1.CombinedOutput()
+	
+	if err1 == nil {
+		output = output1
+		execErr = err1
+	} else {
+		cmd2 := exec.Command("docker-compose", "-f", composePath, "up", "-d")
+		cmd2.Dir = servicePath
+		output2, err2 := cmd2.CombinedOutput()
+		
+		if err2 == nil {
+			output = output2
+			execErr = err2
+		} else {
+			cmd3 := exec.Command("docker", "compose", "up", "-d")
+			cmd3.Dir = servicePath
+			output, execErr = cmd3.CombinedOutput()
+			
+			if execErr != nil {
+				http.Error(w, "Error running docker compose: "+execErr.Error()+"\n"+string(output), http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
