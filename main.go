@@ -84,8 +84,8 @@ func updateImageTag(composePath string, newTag string) error {
 			} else {
 				service["image"] = image + ":" + newTag
 			}
-			services[serviceName] = service
 		}
+		services[serviceName] = service
 	}
 
 	compose["services"] = services
