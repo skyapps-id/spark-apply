@@ -40,29 +40,55 @@ func isValidTag(tag string) bool {
 	return matched
 }
 
+func backupFile(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	backupPath := path + ".backup"
+	return os.WriteFile(backupPath, data, 0644)
+}
+
 func updateImageTag(composePath string, newTag string) error {
 	data, err := os.ReadFile(composePath)
 	if err != nil {
 		return err
 	}
 
-	var compose DockerCompose
+	err = backupFile(composePath)
+	if err != nil {
+		fmt.Printf("Warning: could not create backup: %s\n", err)
+	}
+
+	var compose map[string]interface{}
 	err = yaml.Unmarshal(data, &compose)
 	if err != nil {
 		return err
 	}
 
-	for name, service := range compose.Services {
-		if service.Image != "" {
-			parts := strings.Split(service.Image, ":")
+	services, ok := compose["services"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("services not found or invalid")
+	}
+
+	for serviceName, serviceData := range services {
+		service, ok := serviceData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		if image, ok := service["image"].(string); ok && image != "" {
+			parts := strings.Split(image, ":")
 			if len(parts) > 1 {
-				service.Image = parts[0] + ":" + newTag
+				service["image"] = parts[0] + ":" + newTag
 			} else {
-				service.Image = service.Image + ":" + newTag
+				service["image"] = image + ":" + newTag
 			}
-			compose.Services[name] = service
+			services[serviceName] = service
 		}
 	}
+
+	compose["services"] = services
 
 	newData, err := yaml.Marshal(compose)
 	if err != nil {
