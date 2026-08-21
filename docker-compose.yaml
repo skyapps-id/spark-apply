@@ -1,7 +1,7 @@
-version: '3.8'
 services:
-  spark-apply:
+  api:
     build: .
+    container_name: spark-apply-api
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
