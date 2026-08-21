@@ -4,5 +4,6 @@ services:
     container_name: spark-apply-api
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /home/ajii/manifest:/services
     environment:
-      - BASE_FOLDER=/Users/ajii/Documents/spark-apply/services
+      - BASE_FOLDER=/services
